@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: orgforge-postgres
+    environment:
+      POSTGRES_DB: orgforgedb
+      POSTGRES_USER: orgforge
+      POSTGRES_PASSWORD: orgforge_local
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orgforge -d orgforgedb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: orgforge-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: orgforge-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL: jdbc:postgresql://postgres:5432/orgforgedb
+      DATABASE_USERNAME: orgforge
+      DATABASE_PASSWORD: orgforge_local
+      JWT_SECRET: ${JWT_SECRET}
+      SF_CLIENT_ID: ${SF_CLIENT_ID}
+      SF_CLIENT_SECRET: ${SF_CLIENT_SECRET}
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY}
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: orgforge-frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
