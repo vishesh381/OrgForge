@@ -80,13 +80,25 @@ export const useAuthStore = create(
   )
 )
 
-export const useOrgStore = create((set, get) => ({
-  orgs: [],
-  activeOrgId: null,
-  setOrgs: (orgs) => set({ orgs }),
-  setActiveOrg: (id) => set({ activeOrgId: id }),
-  getActiveOrg: () => get().orgs.find((o) => o.orgId === get().activeOrgId),
-}))
+export const useOrgStore = create(
+  persist(
+    (set, get) => ({
+      orgs: [],
+      activeOrgId: null,
+      orgsLoading: false,
+      setOrgs: (orgs) => set({ orgs }),
+      setActiveOrg: (id) => set({ activeOrgId: id }),
+      setOrgsLoading: (v) => set({ orgsLoading: v }),
+      clearOrgs: () => set({ orgs: [], activeOrgId: null }),
+      getActiveOrg: () => get().orgs.find((o) => o.orgId === get().activeOrgId),
+    }),
+    {
+      name: 'orgforge-org',
+      // Persist org list + active selection so the switcher shows instantly on return visit
+      partialize: (s) => ({ orgs: s.orgs, activeOrgId: s.activeOrgId }),
+    }
+  )
+)
 
 let _notifSeq = 1  // monotonic counter — guarantees unique IDs regardless of timing
 

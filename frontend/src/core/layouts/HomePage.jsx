@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Zap, Eye, Rocket, GitBranch, Shield, Database, BarChart3, MessageSquare, CheckCircle, AlertCircle, X } from 'lucide-react'
-import { useAuthStore, useNotificationStore } from '../store/appStore.js'
+import { useAuthStore, useNotificationStore, useOrgStore } from '../store/appStore.js'
 import apiClient from '../services/apiClient.js'
 
 const modules = [
@@ -38,6 +38,7 @@ function Toast({ toast, onClose }) {
 export default function HomePage() {
   const user = useAuthStore((s) => s.user)
   const { addNotification } = useNotificationStore()
+  const { setOrgs, setActiveOrg } = useOrgStore()
   const [searchParams, setSearchParams] = useSearchParams()
   const [toast, setToast] = useState(null)
 
@@ -46,19 +47,22 @@ export default function HomePage() {
     const error = searchParams.get('error')
 
     if (connected) {
-      // Clean the URL immediately
       setSearchParams({}, { replace: true })
-      // Fetch org name to personalize the message
-      apiClient.get(`/orgs/${connected}`)
-        .then(({ data }) => {
-          const name = data.orgName || 'Your org'
-          setToast({ type: 'success', message: `${name} connected successfully!` })
-          addNotification({ type: 'success', title: 'Org Connected', message: `${name} has been connected to OrgForge.` })
-        })
-        .catch(() => {
-          setToast({ type: 'success', message: 'Org connected successfully!' })
-          addNotification({ type: 'success', title: 'Org Connected', message: 'Your Salesforce org has been connected to OrgForge.' })
-        })
+      // Refresh org list + get this org's name in parallel
+      Promise.all([
+        apiClient.get(`/orgs/${connected}`),
+        apiClient.get('/orgs'),
+      ]).then(([{ data: org }, { data: allOrgs }]) => {
+        // Update the store so the switcher reflects the new org immediately
+        setOrgs(allOrgs)
+        setActiveOrg(org.orgId)
+        const name = org.orgName || 'Your org'
+        setToast({ type: 'success', message: `${name} connected successfully!` })
+        addNotification({ type: 'success', title: 'Org Connected', message: `${name} has been connected to OrgForge.` })
+      }).catch(() => {
+        setToast({ type: 'success', message: 'Org connected successfully!' })
+        addNotification({ type: 'success', title: 'Org Connected', message: 'Your Salesforce org has been connected to OrgForge.' })
+      })
     } else if (error) {
       setSearchParams({}, { replace: true })
       const msg = decodeURIComponent(error)
