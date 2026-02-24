@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -57,6 +58,13 @@ public class AuthController {
         return ResponseEntity.ok(toMap(authService.findById(auth.getName())));
     }
 
+    @PatchMapping("/preferences")
+    public ResponseEntity<?> updatePreferences(@RequestBody PreferencesRequest req, Authentication auth) {
+        OrgForgeUser updated = authService.savePreferences(
+            auth.getName(), req.accentColor(), req.bgTheme(), req.activeOrgId());
+        return ResponseEntity.ok(toMap(updated));
+    }
+
     private void setJwtCookie(HttpServletResponse response, String token) {
         ResponseCookie cookie = ResponseCookie.from("jwt", token)
             .httpOnly(true)
@@ -69,10 +77,18 @@ public class AuthController {
     }
 
     private Map<String, Object> toMap(OrgForgeUser u) {
-        return Map.of("id", u.getId(), "name", u.getName() != null ? u.getName() : "",
-            "email", u.getEmail(), "role", u.getRole());
+        Map<String, Object> m = new HashMap<>();
+        m.put("id", u.getId());
+        m.put("name", u.getName() != null ? u.getName() : "");
+        m.put("email", u.getEmail());
+        m.put("role", u.getRole());
+        m.put("accentColor", u.getAccentColor() != null ? u.getAccentColor() : "indigo");
+        m.put("bgTheme", u.getBgTheme() != null ? u.getBgTheme() : "dark");
+        if (u.getActiveOrgId() != null) m.put("activeOrgId", u.getActiveOrgId());
+        return m;
     }
 
     record LoginRequest(String email, String password) {}
     record RegisterRequest(String name, String email, String password) {}
+    record PreferencesRequest(String accentColor, String bgTheme, String activeOrgId) {}
 }

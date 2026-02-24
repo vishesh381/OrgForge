@@ -67,6 +67,7 @@ export const useAuthStore = create(
       isAuthenticated: false,
       user: null,
       login: (user) => set({ isAuthenticated: true, user }),
+      updateUser: (updates) => set((s) => ({ user: { ...s.user, ...updates } })),
       logout: async () => {
         set({ isAuthenticated: false, user: null })
         const base = import.meta.env.VITE_API_BASE_URL || ''

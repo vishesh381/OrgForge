@@ -23,6 +23,15 @@ public class OrgForgeUser {
     @Builder.Default
     private UserRole role = UserRole.USER;
 
+    // UI preferences — persisted cross-browser
+    @Builder.Default
+    private String accentColor = "indigo";
+
+    @Builder.Default
+    private String bgTheme = "dark";
+
+    private String activeOrgId;  // last selected Salesforce org ID
+
     @Column(updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

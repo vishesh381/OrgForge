@@ -8,6 +8,7 @@ import {
   BG_THEMES,
   applyTheme,
 } from '../store/appStore.js'
+import apiClient from '../services/apiClient.js'
 
 // ─── Accent swatch ────────────────────────────────────────────────────────────
 function AccentSwatch({ id, palette, selected, onSelect }) {
@@ -83,10 +84,16 @@ const TEST_NOTIFICATIONS = [
 
 export default function SettingsPanel({ open, onClose }) {
   const drawerRef = useRef(null)
-  const { user } = useAuthStore()
+  const { user, updateUser } = useAuthStore()
   const { accentColor, bgTheme, setAccentColor, setBgTheme } = useSettingsStore()
   const { addNotification } = useNotificationStore()
   const [seeded, setSeeded] = useState(false)
+
+  const savePreferences = (accent, bg) => {
+    apiClient.patch('/auth/preferences', { accentColor: accent, bgTheme: bg })
+      .then(({ data }) => updateUser({ accentColor: data.accentColor, bgTheme: data.bgTheme }))
+      .catch(() => {})
+  }
 
   // Close on outside click
   useEffect(() => {
@@ -100,16 +107,17 @@ export default function SettingsPanel({ open, onClose }) {
   // Reset seeded state when panel closes
   useEffect(() => { if (!open) setSeeded(false) }, [open])
 
-  // Apply theme on change
+  // Apply theme on change and persist to backend
   const handleAccent = (c) => {
     setAccentColor(c)
     applyTheme(c, bgTheme)
+    savePreferences(c, bgTheme)
   }
   const handleBg = (t) => {
     setBgTheme(t)
     applyTheme(accentColor, t)
-    // Also apply bg immediately to body
     document.body.style.backgroundColor = BG_THEMES[t]?.body || BG_THEMES.dark.body
+    savePreferences(accentColor, t)
   }
 
   const handleSeedNotifications = () => {

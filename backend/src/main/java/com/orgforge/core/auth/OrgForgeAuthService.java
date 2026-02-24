@@ -31,4 +31,12 @@ public class OrgForgeAuthService {
         return userRepository.findById(UUID.fromString(id))
             .orElseThrow(() -> new RuntimeException("User not found"));
     }
+
+    public OrgForgeUser savePreferences(String userId, String accentColor, String bgTheme, String activeOrgId) {
+        OrgForgeUser user = findById(userId);
+        if (accentColor != null) user.setAccentColor(accentColor);
+        if (bgTheme != null) user.setBgTheme(bgTheme);
+        if (activeOrgId != null) user.setActiveOrgId(activeOrgId);
+        return userRepository.save(user);
+    }
 }

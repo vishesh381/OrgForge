@@ -1,11 +1,21 @@
 import { ChevronDown, Plus, CheckCircle } from 'lucide-react'
 import { useState } from 'react'
 import { useOrg } from '../hooks/useOrg.js'
+import { useAuthStore } from '../store/appStore.js'
 import apiClient from '../services/apiClient.js'
 
 export default function OrgSwitcher() {
   const { orgs, activeOrg, setActiveOrg } = useOrg()
+  const { updateUser } = useAuthStore()
   const [open, setOpen] = useState(false)
+
+  const handleSelectOrg = (orgId) => {
+    setActiveOrg(orgId)
+    setOpen(false)
+    apiClient.patch('/auth/preferences', { activeOrgId: orgId })
+      .then(({ data }) => updateUser({ activeOrgId: data.activeOrgId }))
+      .catch(() => {})
+  }
 
   const handleConnect = async () => {
     try {
@@ -38,7 +48,7 @@ export default function OrgSwitcher() {
             {orgs.map((org) => (
               <button
                 key={org.id}
-                onClick={() => { setActiveOrg(org.orgId); setOpen(false) }}
+                onClick={() => handleSelectOrg(org.orgId)}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-700 text-left transition-colors"
               >
                 <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-xs font-bold">
