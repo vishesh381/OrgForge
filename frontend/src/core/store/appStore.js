@@ -69,7 +69,8 @@ export const useAuthStore = create(
       login: (user) => set({ isAuthenticated: true, user }),
       logout: async () => {
         set({ isAuthenticated: false, user: null })
-        try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }) } catch {}
+        const base = import.meta.env.VITE_API_BASE_URL || ''
+        try { await fetch(`${base}/api/auth/logout`, { method: 'POST', credentials: 'include' }) } catch {}
       },
     }),
     {

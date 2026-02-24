@@ -22,6 +22,12 @@ public class AuthController {
     @Value("${app.jwt.expiration-ms}")
     private long jwtExpirationMs;
 
+    @Value("${app.cookie.secure:false}")
+    private boolean cookieSecure;
+
+    @Value("${app.cookie.same-site:Lax}")
+    private String cookieSameSite;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req, HttpServletResponse response) {
         OrgForgeUser user = authService.login(req.email(), req.password()).orElse(null);
@@ -40,7 +46,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
         ResponseCookie clear = ResponseCookie.from("jwt", "")
-            .httpOnly(true).secure(false).sameSite("Lax")
+            .httpOnly(true).secure(cookieSecure).sameSite(cookieSameSite)
             .path("/").maxAge(0).build();
         response.addHeader(HttpHeaders.SET_COOKIE, clear.toString());
         return ResponseEntity.ok(Map.of("message", "Logged out"));
@@ -54,8 +60,8 @@ public class AuthController {
     private void setJwtCookie(HttpServletResponse response, String token) {
         ResponseCookie cookie = ResponseCookie.from("jwt", token)
             .httpOnly(true)
-            .secure(false)
-            .sameSite("Lax")
+            .secure(cookieSecure)
+            .sameSite(cookieSameSite)
             .path("/")
             .maxAge(Duration.ofMillis(jwtExpirationMs))
             .build();

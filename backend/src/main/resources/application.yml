@@ -8,6 +8,7 @@ spring:
 
 server:
   port: ${PORT:8080}
+  address: 0.0.0.0
   tomcat:
     max-http-request-header-size: 65536
 
@@ -26,6 +27,9 @@ app:
     allowed-origins: ${APP_CORS_ORIGINS:http://localhost:5173}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
   encryption-key: ${ENCRYPTION_KEY:change-me-in-production-32chars!!}
+  cookie:
+    secure: ${COOKIE_SECURE:false}
+    same-site: ${COOKIE_SAME_SITE:Lax}
 
 claude:
   api-key: ${CLAUDE_API_KEY:}
