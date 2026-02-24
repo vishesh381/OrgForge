@@ -226,6 +226,14 @@ public class FlowForgeService {
                 vars.add(v);
             }
             return vars;
+        } catch (org.springframework.web.client.HttpClientErrorException.NotFound nfe) {
+            // Flow is not registered as an invocable action in this org (screen flow,
+            // record-triggered flow, scheduled flow, etc.). Return empty list so the
+            // caller knows there are no inputs — the frontend handles the "not invocable"
+            // message itself based on flow.invocable flag.
+            log.warn("Flow '{}' not found in Salesforce Actions API (not invocable): {}",
+                    invocableApiName, nfe.getStatusCode());
+            return Collections.emptyList();
         } catch (Exception e) {
             log.error("Failed to get input variables for flow {}: {}", invocableApiName, e.getMessage(), e);
             throw new RuntimeException("Failed to get flow inputs: " + e.getMessage(), e);

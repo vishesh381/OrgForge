@@ -19,11 +19,21 @@ export default function RunFlowModal({ flow, orgId, onRun, onClose }) {
   const [fetchError, setFetchError] = useState(null)
   const [running, setRunning] = useState(false)
 
+  // Use invocableApiName if known (namespaced), else fall back to plain apiName
+  const effectiveApiName = flow?.invocableApiName || flow?.apiName
+  // Only AutoLaunched flows registered in the SF Actions API can be run from OrgForge
+  const isInvocable = !!flow?.invocable
+
   useEffect(() => {
-    if (!flow?.invocableApiName || !orgId) return
+    // Skip API call entirely for non-invocable flows — they are not in SF Actions API
+    if (!isInvocable) {
+      setLoading(false)
+      return
+    }
+    if (!effectiveApiName || !orgId) return
     setLoading(true)
     setFetchError(null)
-    getFlowInputs(orgId, flow.invocableApiName)
+    getFlowInputs(orgId, effectiveApiName)
       .then(({ data }) => {
         const vars = Array.isArray(data) ? data : []
         setInputVars(vars)
@@ -77,7 +87,7 @@ export default function RunFlowModal({ flow, orgId, onRun, onClose }) {
     }
   }
 
-  const canRun = !loading && !fetchError && !running
+  const canRun = isInvocable && !loading && !fetchError && !running
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -86,9 +96,16 @@ export default function RunFlowModal({ flow, orgId, onRun, onClose }) {
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-700 flex items-start justify-between shrink-0">
           <div>
-            <h3 className="text-base font-semibold text-white">Run Flow</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-semibold text-white">Run Flow</h3>
+              {!isInvocable && (
+                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-slate-600/60 text-slate-400 border border-slate-600">
+                  Not Invocable
+                </span>
+              )}
+            </div>
             <p className="text-sm text-slate-400 mt-0.5 truncate max-w-sm">{flow?.label}</p>
-            <p className="text-xs text-slate-600 mt-0.5 truncate max-w-sm font-mono">{flow?.invocableApiName}</p>
+            <p className="text-xs text-slate-600 mt-0.5 truncate max-w-sm font-mono">{effectiveApiName}</p>
           </div>
           <button
             onClick={onClose}
@@ -100,7 +117,21 @@ export default function RunFlowModal({ flow, orgId, onRun, onClose }) {
 
         {/* Body */}
         <div className="px-6 py-5 overflow-y-auto flex-1">
-          {loading ? (
+          {!isInvocable ? (
+            <div className="p-5 bg-slate-700/20 border border-slate-600/50 rounded-xl text-center space-y-2">
+              <div className="text-2xl">🔒</div>
+              <p className="text-slate-200 text-sm font-medium">Cannot run from OrgForge</p>
+              <p className="text-slate-400 text-xs leading-relaxed">
+                <span className="font-semibold text-slate-300">{flow?.processType || 'This flow type'}</span> flows
+                are not registered in the Salesforce Invocable Actions API.<br />
+                Only <span className="text-indigo-300 font-medium">AutoLaunched flows</span> marked as invocable
+                can be executed from OrgForge.
+              </p>
+              <p className="text-slate-500 text-xs mt-1">
+                Run this flow directly from <span className="text-slate-400">Salesforce Setup → Flows</span>.
+              </p>
+            </div>
+          ) : loading ? (
             <div className="space-y-3 animate-pulse">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-14 bg-slate-700/50 rounded-lg" />
@@ -196,7 +227,7 @@ export default function RunFlowModal({ flow, orgId, onRun, onClose }) {
             disabled={!canRun}
             className="px-5 py-2 text-sm font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors min-w-24 text-center"
           >
-            {running ? 'Running...' : 'Run Flow'}
+            {running ? 'Running...' : !isInvocable ? 'Not Runnable' : 'Run Flow'}
           </button>
         </div>
       </div>

@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import AppShell from './core/components/AppShell.jsx'
 import LoadingSpinner from './core/components/LoadingSpinner.jsx'
 import LoginPage from './core/layouts/LoginPage.jsx'
-import { useAuthStore } from './core/store/appStore.js'
+import { useAuthStore, useSettingsStore, applyTheme, BG_THEMES } from './core/store/appStore.js'
 
 // Lazy load all module pages
 const HomePage          = lazy(() => import('./core/layouts/HomePage.jsx'))
@@ -21,6 +21,14 @@ const OrgChatPage           = lazy(() => import('./modules/org-chat/pages/OrgCha
 
 function ProtectedApp() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { accentColor, bgTheme } = useSettingsStore()
+
+  // Re-apply saved theme whenever the app loads
+  useEffect(() => {
+    applyTheme(accentColor, bgTheme)
+    document.body.style.backgroundColor = BG_THEMES[bgTheme]?.body || BG_THEMES.dark.body
+  }, [accentColor, bgTheme])
+
   if (!isAuthenticated) return <Navigate to="/login" replace />
   return (
     <AppShell>

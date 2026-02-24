@@ -284,8 +284,8 @@ export default function FlowDashboard() {
           <div className="mb-4 p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-start gap-2">
             <span className="text-indigo-400 mt-0.5">&#9432;</span>
             <p className="text-sm text-indigo-300">
-              Only <span className="font-semibold">Autolaunched Flows with no trigger</span> can be invoked from OrgForge.
-              Screen Flows, Record-Triggered Flows, Scheduled Flows, and Platform Event Flows must be run directly from Salesforce.
+              All active flows are listed. <span className="font-semibold">Invocable</span> flows (AutoLaunched with defined inputs) run directly from OrgForge.
+              Other flow types (Screen, Record-Triggered, etc.) can be attempted — OrgForge will collect inputs and call the Salesforce Actions API.
             </p>
           </div>
 
@@ -325,7 +325,7 @@ export default function FlowDashboard() {
                 <div className="px-4 py-3 border-b border-slate-700 flex items-center gap-3 flex-wrap">
                   <span className="text-sm font-medium text-slate-300">
                     {flows.length} flows &nbsp;·&nbsp;
-                    <span className="text-indigo-400">{invocableCount} runnable</span>
+                    <span className="text-indigo-400">{invocableCount} invocable</span>
                   </span>
                   <div className="flex-1" />
                   {/* Search */}
@@ -345,7 +345,7 @@ export default function FlowDashboard() {
                         : 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-white'
                     }`}
                   >
-                    Runnable Only
+                    Invocable Only
                   </button>
                   <button onClick={loadFlows} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
                     Refresh
@@ -387,24 +387,20 @@ export default function FlowDashboard() {
                               <td className="px-4 py-3 text-slate-400 text-xs">{f.processType || '—'}</td>
                               <td className="px-4 py-3 text-slate-400 text-xs">{f.triggerType || 'None'}</td>
                               <td className="px-4 py-3">
-                                {f.invocable ? (
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() => handleOpenRunModal(f)}
-                                      disabled={!!runningFlowId}
-                                      className="px-3 py-1 text-xs font-medium rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
-                                    >
-                                      {isRunning ? 'Running...' : 'Run'}
-                                    </button>
-                                    {result && (
-                                      <span className={`text-xs font-medium ${result.status === 'Success' ? 'text-green-400' : 'text-red-400'}`}>
-                                        {result.status === 'Success' ? 'Done' : 'Error'}
-                                      </span>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-slate-600">Run from SF</span>
-                                )}
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => handleOpenRunModal(f)}
+                                    disabled={!!runningFlowId}
+                                    className="px-3 py-1 text-xs font-medium rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+                                  >
+                                    {isRunning ? 'Running...' : 'Run'}
+                                  </button>
+                                  {result && (
+                                    <span className={`text-xs font-medium ${result.status === 'Success' ? 'text-green-400' : 'text-red-400'}`}>
+                                      {result.status === 'Success' ? 'Done' : 'Error'}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           )
