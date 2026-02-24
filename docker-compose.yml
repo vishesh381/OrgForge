@@ -25,11 +25,11 @@ services:
       - "6379:6379"
     command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
 
-  backend:
+  app:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
-    container_name: orgforge-backend
+    container_name: orgforge-app
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,16 +44,6 @@ services:
       CLAUDE_API_KEY: ${CLAUDE_API_KEY}
     ports:
       - "8080:8080"
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: orgforge-frontend
-    depends_on:
-      - backend
-    ports:
-      - "80:80"
 
 volumes:
   postgres_data:
