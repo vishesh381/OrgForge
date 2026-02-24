@@ -22,6 +22,6 @@ public class SalesforceAuthController {
         String userId = (state != null && state.length() > 10) ? state
                       : (auth != null ? auth.getName() : "anonymous");
         OrgConnection org = salesforceAuthService.exchangeCodeForTokens(code, userId);
-        return new RedirectView(frontendUrl + "/orgs?connected=" + org.getId());
+        return new RedirectView(frontendUrl + "/?connected=" + org.getId());
     }
 }
