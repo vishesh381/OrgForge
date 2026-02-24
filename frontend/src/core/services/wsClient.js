@@ -12,7 +12,7 @@ class WebSocketClient {
     if (this.client?.connected) return
     const token = useAuthStore.getState().token
     this.client = new Client({
-      webSocketFactory: () => new SockJS('/ws'),
+      webSocketFactory: () => new SockJS(import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/ws` : '/ws'),
       connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
       reconnectDelay: 5000,
       onConnect: () => {

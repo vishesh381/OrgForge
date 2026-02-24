@@ -29,7 +29,7 @@ app:
 
 claude:
   api-key: ${CLAUDE_API_KEY:}
-  model: ${CLAUDE_MODEL:claude-haiku-4-5}
+  model: ${CLAUDE_MODEL:claude-haiku-4-5-20251001}
 
 logging:
   level:
