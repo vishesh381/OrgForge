@@ -23,8 +23,10 @@ public class OrgConnectionController {
     }
 
     @GetMapping("/connect")
-    public ResponseEntity<Map<String, String>> getConnectUrl(Authentication auth) {
-        return ResponseEntity.ok(Map.of("url", salesforceAuthService.buildAuthUrl(auth.getName())));
+    public ResponseEntity<Map<String, String>> getConnectUrl(
+            @RequestParam(defaultValue = "false") boolean sandbox,
+            Authentication auth) {
+        return ResponseEntity.ok(Map.of("url", salesforceAuthService.buildAuthUrl(auth.getName(), sandbox)));
     }
 
     @GetMapping("/{id}")

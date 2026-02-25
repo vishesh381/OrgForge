@@ -27,8 +27,9 @@ public class SalesforceAuthService {
     private final OrgConnectionManager orgConnectionManager;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public String buildAuthUrl(String state) {
-        return UriComponentsBuilder.fromHttpUrl(loginUrl + "/services/oauth2/authorize")
+    public String buildAuthUrl(String state, boolean sandbox) {
+        String baseUrl = sandbox ? "https://test.salesforce.com" : loginUrl;
+        return UriComponentsBuilder.fromHttpUrl(baseUrl + "/services/oauth2/authorize")
             .queryParam("response_type", "code")
             .queryParam("client_id", clientId)
             .queryParam("redirect_uri", redirectUri)
