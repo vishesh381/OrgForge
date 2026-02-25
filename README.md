@@ -204,6 +204,3 @@ orgforge/
 
 ---
 
-## License
-
-MIT
