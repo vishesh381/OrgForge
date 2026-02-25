@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, Plus, CheckCircle, RefreshCw } from 'lucide-react'
+import { ChevronDown, Plus, CheckCircle, RefreshCw, Unplug } from 'lucide-react'
 import { useOrg } from '../hooks/useOrg.js'
 import { useAuthStore, useOrgStore } from '../store/appStore.js'
 import apiClient from '../services/apiClient.js'
@@ -19,6 +19,7 @@ export default function OrgSwitcher() {
   const [open, setOpen] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
   const [refreshingId, setRefreshingId] = useState(null)
+  const [disconnectingId, setDisconnectingId] = useState(null)
 
   const handleSelectOrg = (orgId) => {
     setActiveOrg(orgId)
@@ -38,6 +39,21 @@ export default function OrgSwitcher() {
       setOrgs(data)
     } catch {}
     setRefreshingId(null)
+  }
+
+  const handleDisconnect = async (e, org) => {
+    e.stopPropagation()
+    setDisconnectingId(org.id)
+    try {
+      await apiClient.delete(`/orgs/${org.id}`)
+      const { data } = await apiClient.get('/orgs')
+      setOrgs(data)
+      // If the disconnected org was active, switch to first remaining
+      if (org.orgId === activeOrg?.orgId) {
+        setActiveOrg(data[0]?.orgId ?? null)
+      }
+    } catch {}
+    setDisconnectingId(null)
   }
 
   const orgTypeColor = ORG_TYPE_COLORS[activeOrg?.orgType] || ORG_TYPE_COLORS.PRODUCTION
@@ -70,7 +86,8 @@ export default function OrgSwitcher() {
                 orgs.map((org) => {
                   const typeColor = ORG_TYPE_COLORS[org.orgType] || ORG_TYPE_COLORS.PRODUCTION
                   const isActive = org.orgId === activeOrg?.orgId
-                  const isRefreshing = refreshingId === org.id
+                  const isRefreshing    = refreshingId    === org.id
+                  const isDisconnecting = disconnectingId === org.id
 
                   return (
                     <button
@@ -87,16 +104,25 @@ export default function OrgSwitcher() {
                         <p className="text-sm font-medium text-white truncate">{org.orgName}</p>
                         <p className="text-[10px] text-slate-500 mt-0.5">{org.orgType}</p>
                       </div>
-                      {isActive && !isRefreshing && (
+                      {isActive && !isRefreshing && !isDisconnecting && (
                         <CheckCircle className="w-4 h-4 text-indigo-400 shrink-0" />
                       )}
-                      <button
-                        onClick={(e) => handleRefresh(e, org.id)}
-                        title="Refresh org name & type from Salesforce"
-                        className="shrink-0 p-1 rounded-md text-slate-600 hover:text-slate-300 hover:bg-slate-700 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`} />
-                      </button>
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => handleRefresh(e, org.id)}
+                          title="Refresh org name & type"
+                          className="p-1 rounded-md text-slate-500 hover:text-slate-300 hover:bg-slate-700 transition-colors"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`} />
+                        </button>
+                        <button
+                          onClick={(e) => handleDisconnect(e, org)}
+                          title="Disconnect org"
+                          className="p-1 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          <Unplug className={`w-3 h-3 ${isDisconnecting ? 'animate-pulse text-red-400' : ''}`} />
+                        </button>
+                      </div>
                     </button>
                   )
                 })
