@@ -44,6 +44,12 @@ public class OrgConnectionController {
         ));
     }
 
+    @PostMapping("/{id}/refresh")
+    public ResponseEntity<OrgConnection> refreshOrgInfo(@PathVariable UUID id) {
+        OrgConnection org = salesforceAuthService.refreshOrgInfo(orgConnectionManager.getOrg(id));
+        return ResponseEntity.ok(orgConnectionManager.saveOrg(org));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> disconnectOrg(@PathVariable UUID id) {
         orgConnectionManager.disconnectOrg(id);

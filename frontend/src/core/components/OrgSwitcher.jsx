@@ -1,22 +1,24 @@
 import { useState } from 'react'
-import { ChevronDown, Plus, CheckCircle } from 'lucide-react'
+import { ChevronDown, Plus, CheckCircle, RefreshCw } from 'lucide-react'
 import { useOrg } from '../hooks/useOrg.js'
-import { useAuthStore } from '../store/appStore.js'
+import { useAuthStore, useOrgStore } from '../store/appStore.js'
 import apiClient from '../services/apiClient.js'
 import ConnectOrgModal from './ConnectOrgModal.jsx'
 
 const ORG_TYPE_COLORS = {
-  PRODUCTION:     'text-blue-400 bg-blue-500/10 border-blue-500/20',
-  SANDBOX:        'text-amber-400 bg-amber-500/10 border-amber-500/20',
-  DEVELOPER:      'text-violet-400 bg-violet-500/10 border-violet-500/20',
-  SCRATCH:        'text-pink-400 bg-pink-500/10 border-pink-500/20',
+  PRODUCTION: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+  SANDBOX:    'text-amber-400 bg-amber-500/10 border-amber-500/20',
+  DEVELOPER:  'text-violet-400 bg-violet-500/10 border-violet-500/20',
+  SCRATCH:    'text-pink-400 bg-pink-500/10 border-pink-500/20',
 }
 
 export default function OrgSwitcher() {
   const { orgs, activeOrg, setActiveOrg } = useOrg()
   const { updateUser } = useAuthStore()
+  const { setOrgs } = useOrgStore()
   const [open, setOpen] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
+  const [refreshingId, setRefreshingId] = useState(null)
 
   const handleSelectOrg = (orgId) => {
     setActiveOrg(orgId)
@@ -24,6 +26,18 @@ export default function OrgSwitcher() {
     apiClient.patch('/auth/preferences', { activeOrgId: orgId })
       .then(({ data }) => updateUser({ activeOrgId: data.activeOrgId }))
       .catch(() => {})
+  }
+
+  // Refresh org name + type from Salesforce (fixes wrong type on existing orgs)
+  const handleRefresh = async (e, orgId) => {
+    e.stopPropagation()
+    setRefreshingId(orgId)
+    try {
+      await apiClient.post(`/orgs/${orgId}/refresh`)
+      const { data } = await apiClient.get('/orgs')
+      setOrgs(data)
+    } catch {}
+    setRefreshingId(null)
   }
 
   const orgTypeColor = ORG_TYPE_COLORS[activeOrg?.orgType] || ORG_TYPE_COLORS.PRODUCTION
@@ -49,7 +63,6 @@ export default function OrgSwitcher() {
 
         {open && (
           <div className="absolute top-full mt-2 left-0 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50">
-            {/* Org list */}
             <div className="p-2">
               {orgs.length === 0 ? (
                 <p className="text-xs text-slate-500 text-center py-4">No orgs connected yet</p>
@@ -57,29 +70,39 @@ export default function OrgSwitcher() {
                 orgs.map((org) => {
                   const typeColor = ORG_TYPE_COLORS[org.orgType] || ORG_TYPE_COLORS.PRODUCTION
                   const isActive = org.orgId === activeOrg?.orgId
+                  const isRefreshing = refreshingId === org.id
+
                   return (
                     <button
                       key={org.id}
                       onClick={() => handleSelectOrg(org.orgId)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${
                         isActive ? 'bg-slate-800' : 'hover:bg-slate-800'
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border ${typeColor}`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border shrink-0 ${typeColor}`}>
                         {org.orgName?.[0]?.toUpperCase() || 'O'}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white truncate">{org.orgName}</p>
                         <p className="text-[10px] text-slate-500 mt-0.5">{org.orgType}</p>
                       </div>
-                      {isActive && <CheckCircle className="w-4 h-4 text-indigo-400 shrink-0" />}
+                      {isActive && !isRefreshing && (
+                        <CheckCircle className="w-4 h-4 text-indigo-400 shrink-0" />
+                      )}
+                      <button
+                        onClick={(e) => handleRefresh(e, org.id)}
+                        title="Refresh org name & type from Salesforce"
+                        className="shrink-0 p-1 rounded-md text-slate-600 hover:text-slate-300 hover:bg-slate-700 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`} />
+                      </button>
                     </button>
                   )
                 })
               )}
             </div>
 
-            {/* Connect button */}
             <div className="border-t border-slate-700/60 p-2">
               <button
                 onClick={() => { setOpen(false); setShowConnectModal(true) }}

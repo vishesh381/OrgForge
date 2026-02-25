@@ -79,6 +79,11 @@ public class SalesforceAuthService {
         return orgConnectionManager.saveOrg(org);
     }
 
+    public OrgConnection refreshOrgInfo(OrgConnection org) {
+        fetchOrgInfo(org, org.getAccessToken());
+        return org;
+    }
+
     @SuppressWarnings("unchecked")
     public String refreshAccessToken(OrgConnection org) {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -104,18 +109,30 @@ public class SalesforceAuthService {
             HttpHeaders h = new HttpHeaders();
             h.setBearerAuth(accessToken);
             Map<?, ?> resp = restTemplate.exchange(
-                org.getInstanceUrl() + "/services/data/v60.0/query?q=SELECT+Id,+Name,+OrganizationType+FROM+Organization",
+                org.getInstanceUrl() + "/services/data/v60.0/query?q=SELECT+Id,+Name,+OrganizationType,+IsSandbox+FROM+Organization",
                 HttpMethod.GET, new HttpEntity<>(h), Map.class).getBody();
             List<Map<String, Object>> records = (List<Map<String, Object>>) resp.get("records");
             if (records != null && !records.isEmpty()) {
                 org.setOrgName((String) records.get(0).get("Name"));
-                String type = (String) records.get(0).get("OrganizationType");
-                if (type != null) {
-                    try { org.setOrgType(OrgConnection.OrgType.valueOf(type.toUpperCase().replace(" ", "_"))); }
-                    catch (Exception e) { org.setOrgType(OrgConnection.OrgType.SANDBOX); }
-                }
+                String type     = (String)  records.get(0).get("OrganizationType");
+                Boolean sandbox = (Boolean) records.get(0).get("IsSandbox");
+                org.setOrgType(resolveOrgType(type, sandbox));
             }
         } catch (Exception e) { log.warn("Could not fetch org info: {}", e.getMessage()); }
+    }
+
+    private OrgConnection.OrgType resolveOrgType(String sfType, Boolean isSandbox) {
+        // IsSandbox is the most reliable signal — available since API v29
+        if (Boolean.TRUE.equals(isSandbox)) {
+            // Scratch orgs also report IsSandbox=true; distinguish by OrganizationType
+            if (sfType != null && sfType.equalsIgnoreCase("Scratch")) return OrgConnection.OrgType.SCRATCH;
+            return OrgConnection.OrgType.SANDBOX;
+        }
+        // Non-sandbox: check for Developer Edition variants
+        if (sfType != null && (sfType.contains("Developer") || sfType.equalsIgnoreCase("Partner Developer"))) {
+            return OrgConnection.OrgType.DEVELOPER;
+        }
+        return OrgConnection.OrgType.PRODUCTION;
     }
 
     private String extractOrgId(String idUrl) {
