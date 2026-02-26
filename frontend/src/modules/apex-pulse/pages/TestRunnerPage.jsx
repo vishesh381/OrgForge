@@ -40,6 +40,7 @@ export default function TestRunnerPage() {
   const handleProgressUpdate = useCallback((data) => {
     setProgress(data)
     if (data.status === 'Completed') {
+      // "Completed" is only broadcast by finalizeRun() after results are saved to DB
       setRunning(false)
       setWsActive(false)
       const runId = data.dbRunId
@@ -48,6 +49,7 @@ export default function TestRunnerPage() {
         fetchResults(runId)
       }
     }
+    // "Finalizing" means queue is done but DB write is still in progress — keep WS open
   }, [activeOrgId])
 
   useWebSocket(wsActive ? '/topic/test-progress' : null, handleProgressUpdate)

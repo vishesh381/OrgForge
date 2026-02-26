@@ -92,6 +92,7 @@ public class TestExecutionService {
                     String status = (String) item.get("Status");
                     if ("Completed".equals(status)) {
                         completed++;
+                        passed++;
                     } else if ("Failed".equals(status)) {
                         completed++;
                         failed++;
@@ -101,7 +102,9 @@ public class TestExecutionService {
                 }
 
                 double pct = total > 0 ? (completed * 100.0 / total) : 0;
-                String status = allDone ? "Completed" : "Processing";
+                // Use "Finalizing" when all queue items are done so the frontend keeps
+                // the WebSocket open until finalizeRun() has saved results and broadcasts "Completed"
+                String status = allDone ? "Finalizing" : "Processing";
 
                 TestProgressDTO progress = new TestProgressDTO(
                         testRunId, dbRunId, status, total, completed, passed, failed,

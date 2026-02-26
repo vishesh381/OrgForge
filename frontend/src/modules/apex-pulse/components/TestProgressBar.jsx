@@ -2,13 +2,14 @@ export default function TestProgressBar({ progress }) {
   if (!progress) return null
 
   const { status, totalTests, completedTests, passCount, failCount, percentComplete } = progress
-  const isComplete = status === 'Completed'
+  const isComplete   = status === 'Completed'
+  const isFinalizing = status === 'Finalizing'
 
   return (
     <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-medium text-white">
-          {isComplete ? 'Test Run Complete' : 'Running Tests...'}
+          {isComplete ? 'Test Run Complete' : isFinalizing ? 'Saving results...' : 'Running Tests...'}
         </h3>
         <span className="text-sm text-slate-400">
           {completedTests} / {totalTests} tests
