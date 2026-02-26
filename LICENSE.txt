@@ -1,0 +1,9 @@
+Copyright (c) 2026 Vishesh Sharma
+
+All rights reserved.
+
+This software and associated source code are the proprietary property of the author.
+
+Permission is granted to view and use this software for personal, non-commercial purposes only.
+
+No part of this software may be copied, modified, distributed, sublicensed, published, or sold in any form without explicit written permission from the author.
