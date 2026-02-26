@@ -35,6 +35,7 @@ public class SalesforceAuthService {
             .queryParam("redirect_uri", redirectUri)
             .queryParam("scope", "full refresh_token api")
             .queryParam("state", state)
+            .queryParam("prompt", "login")
             .build().toUriString();
     }
 
