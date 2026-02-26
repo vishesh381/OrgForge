@@ -17,7 +17,7 @@ A full-stack Salesforce management platform that gives developers and admins dee
 | **Flow Forge** | `/flow-forge` | Flow execution analytics, error tracking, and overlap detection |
 | **Permission Pilot** | `/permission-pilot` | Access tracing, permission comparison, and compliance auditing |
 | **Data Forge** | `/data-forge` | Bulk CSV import with field mapping, validation, and rollback |
-| **Org Chat** | `/org-chat` | Natural language → SOQL via Claude AI |
+| **Org Chat** | `/org-chat` | Natural language → SOQL |
 
 ---
 
