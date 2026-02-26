@@ -8,5 +8,5 @@ import java.util.UUID;
 public interface OrgConnectionRepository extends JpaRepository<OrgConnection, UUID> {
     Optional<OrgConnection> findByOrgId(String orgId);
     List<OrgConnection> findByIsActiveTrue();
-    List<OrgConnection> findByConnectedByUserId(String userId);
+    List<OrgConnection> findByConnectedByUserIdAndIsActiveTrue(String userId);
 }

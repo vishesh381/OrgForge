@@ -12,7 +12,7 @@ public class OrgConnectionManager {
     private final OrgConnectionRepository repo;
 
     public List<OrgConnection> getAllActiveOrgs() { return repo.findByIsActiveTrue(); }
-    public List<OrgConnection> getOrgsByUser(String userId) { return repo.findByConnectedByUserId(userId); }
+    public List<OrgConnection> getOrgsByUser(String userId) { return repo.findByConnectedByUserIdAndIsActiveTrue(userId); }
 
     public OrgConnection getOrg(UUID id) {
         return repo.findById(id).orElseThrow(() -> new RuntimeException("Org not found: " + id));
