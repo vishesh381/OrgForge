@@ -37,6 +37,8 @@ replay_pid*.log
 
 # Claude Code local settings
 .claude/
+CLAUDE.md
+**/CLAUDE.md
 
 # macOS / Windows
 .DS_Store
