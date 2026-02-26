@@ -203,4 +203,7 @@ orgforge/
 ```
 
 ---
+## License
+
+This project is proprietary. See `LICENSE.txt` for details.
 
